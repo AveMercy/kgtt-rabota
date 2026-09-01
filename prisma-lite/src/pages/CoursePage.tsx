@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { coursesStore } from '@/store/coursesStore';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,7 +18,10 @@ import {
     arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronLeft, FileText, Code, Pencil, Trash2, FilePlus, FolderPlus, GripVertical, Copy } from 'lucide-react';
+import {
+    ChevronLeft, FileText, Code, Pencil, Trash2, FilePlus, FolderPlus,
+    GripVertical, Copy, Menu, X
+} from 'lucide-react';
 import type { Course, LectureBlock } from '@/types/lecture';
 
 const lectureIcons: Record<string, React.ElementType> = { theory: FileText, practice: Code };
@@ -51,20 +53,20 @@ function SortableLecture({ lec, isSelected, onSelect, onDelete, courseId, module
     return (
         <div ref={setNodeRef} style={style} className="group flex items-center">
             {isAdmin && (
-                <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-1 text-muted-foreground hover:text-foreground">
+                <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing px-1 text-muted-foreground hover:text-foreground flex-shrink-0">
                     <GripVertical className="h-3.5 w-3.5" />
                 </button>
             )}
             {editing ? (
-                <div className="flex gap-1 flex-1 px-3 py-1">
+                <div className="flex gap-1 flex-1 px-3 py-1 min-w-0">
                     <Input value={title} onChange={(e) => setTitle(e.target.value)}
                            className="h-7 text-xs" onKeyDown={(e) => e.key === 'Enter' && handleSave()} autoFocus />
-                    <Button size="sm" className="h-7 text-xs" onClick={handleSave}>OK</Button>
+                    <Button size="sm" className="h-7 text-xs flex-shrink-0" onClick={handleSave}>OK</Button>
                 </div>
             ) : (
                 <button
                     onClick={onSelect}
-                    className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                    className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left min-w-0 ${
                         isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground'
                     }`}
                 >
@@ -73,33 +75,29 @@ function SortableLecture({ lec, isSelected, onSelect, onDelete, courseId, module
                 </button>
             )}
             {isAdmin && !editing && (
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {/* Смена типа */}
+                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button onClick={(e) => {
                         e.stopPropagation();
                         const newType = lec.type === 'theory' ? 'practice' : 'theory';
                         coursesStore.updateLecture(courseId, moduleId, lec.id, { type: newType as 'theory' | 'practice' });
                         reloadCourse();
-                    }} title={lec.type === 'theory' ? 'Сделать практикой' : 'Сделать теорией'}>
+                    }} title={lec.type === 'theory' ? 'Сделать практикой' : 'Сделать теорией'} className="p-0.5">
                         {lec.type === 'theory' ? (
                             <Code className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                         ) : (
                             <FileText className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                         )}
                     </button>
-                    {/* Копирование */}
                     <button onClick={(e) => {
                         e.stopPropagation();
                         onCopy(lec.id, moduleId);
-                    }} title="Копировать в другой курс">
+                    }} title="Копировать в другой курс" className="p-0.5">
                         <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                     </button>
-                    {/* Редактирование названия */}
-                    <button onClick={(e) => { e.stopPropagation(); setEditing(true); setTitle(lec.title); }}>
+                    <button onClick={(e) => { e.stopPropagation(); setEditing(true); setTitle(lec.title); }} className="p-0.5">
                         <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                     </button>
-                    {/* Удаление */}
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-0.5">
                         <Trash2 className="h-3 w-3 text-destructive" />
                     </button>
                 </div>
@@ -136,26 +134,30 @@ function SortableModule({ module, selectedLectureId, onSelectLecture, onDeleteLe
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="mb-4">
-            <div className="flex items-center justify-between mb-2 px-2 group">
+        <div ref={setNodeRef} style={style} className="mb-3 md:mb-4">
+            <div className="flex items-center justify-between mb-1.5 md:mb-2 px-2 group">
                 {isAdmin && (
-                    <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing mr-1 text-muted-foreground hover:text-foreground">
-                        <GripVertical className="h-4 w-4" />
+                    <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing mr-1 text-muted-foreground hover:text-foreground flex-shrink-0">
+                        <GripVertical className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </button>
                 )}
                 {editingModuleId === module.id ? (
-                    <div className="flex gap-1 flex-1">
+                    <div className="flex gap-1 flex-1 min-w-0">
                         <Input value={editingModuleTitle} onChange={(e) => setEditingModuleTitle(e.target.value)} className="h-7 text-xs"
                                onKeyDown={(e) => { if (e.key === 'Enter') { coursesStore.updateModule(courseId, module.id, editingModuleTitle); setEditingModuleId(null); reloadCourse(); } }} autoFocus />
-                        <Button size="sm" className="h-7 text-xs" onClick={() => { coursesStore.updateModule(courseId, module.id, editingModuleTitle); setEditingModuleId(null); reloadCourse(); }}>OK</Button>
+                        <Button size="sm" className="h-7 text-xs flex-shrink-0" onClick={() => { coursesStore.updateModule(courseId, module.id, editingModuleTitle); setEditingModuleId(null); reloadCourse(); }}>OK</Button>
                     </div>
                 ) : (
                     <>
-                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex-1">{module.title}</h3>
+                        <h3 className="text-[11px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider flex-1 line-clamp-1">{module.title}</h3>
                         {isAdmin && (
-                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setEditingModuleId(module.id); setEditingModuleTitle(module.title); }}><Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" /></button>
-                                <button onClick={() => { if (confirm('Удалить модуль?')) { coursesStore.deleteModule(courseId, module.id); reloadCourse(); } }}><Trash2 className="h-3 w-3 text-destructive" /></button>
+                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                <button onClick={() => { setEditingModuleId(module.id); setEditingModuleTitle(module.title); }} className="p-0.5">
+                                    <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                </button>
+                                <button onClick={() => { if (confirm('Удалить модуль?')) { coursesStore.deleteModule(courseId, module.id); reloadCourse(); } }} className="p-0.5">
+                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                </button>
                             </div>
                         )}
                     </>
@@ -223,8 +225,8 @@ export default function CoursePage() {
     const [addLectureForModule, setAddLectureForModule] = useState<string | null>(null);
     const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
     const [editingModuleTitle, setEditingModuleTitle] = useState('');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Копирование лекции
     const [showCopyDialog, setShowCopyDialog] = useState<{ lectureId: string; moduleId: string } | null>(null);
     const [copyTargetCourse, setCopyTargetCourse] = useState('');
     const [copyTargetModule, setCopyTargetModule] = useState('');
@@ -279,6 +281,7 @@ export default function CoursePage() {
     const handleSelectLecture = (lectureId: string) => {
         setSelectedLectureId(lectureId);
         setEditingLectureId(null);
+        setSidebarOpen(false); // Закрываем сайдбар на мобильных
     };
 
     const handleCopyLecture = (lectureId: string, moduleId: string) => {
@@ -288,16 +291,41 @@ export default function CoursePage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-4rem)]">
-            <aside className="w-72 border-r bg-card flex flex-col">
-                <div className="p-4 border-b">
-                    <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                        <ChevronLeft className="h-4 w-4" />Курсы
-                    </Link>
-                    <h2 className="font-semibold mt-2 line-clamp-2">{course.title}</h2>
+        <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] relative">
+            {/* Оверлей для мобильного сайдбара */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
+            {/* Сайдбар */}
+            <aside className={`
+                fixed md:static z-40
+                w-72 md:w-64 lg:w-72
+                h-full
+                border-r bg-card flex flex-col
+                transition-transform duration-200
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                md:translate-x-0
+            `}>
+                <div className="p-3 md:p-4 border-b flex items-center justify-between">
+                    <div className="min-w-0">
+                        <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                            <ChevronLeft className="h-4 w-4 flex-shrink-0" />Курсы
+                        </Link>
+                        <h2 className="font-semibold mt-1 md:mt-2 line-clamp-2 text-sm md:text-base">{course.title}</h2>
+                    </div>
+                    <button
+                        className="md:hidden p-1.5 rounded-lg hover:bg-muted"
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
                 </div>
                 <ScrollArea className="flex-1">
-                    <div className="p-3">
+                    <div className="p-2 md:p-3">
                         <DndContext sensors={modulesSensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                             <SortableContext items={course.modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                                 {course.modules.map((module) => (
@@ -344,21 +372,32 @@ export default function CoursePage() {
                 </ScrollArea>
             </aside>
 
-            <main className="flex-1 overflow-y-auto">
+            {/* Основной контент */}
+            <main className="flex-1 overflow-y-auto min-w-0">
+                {/* Мобильная кнопка меню */}
+                {!sidebarOpen && (
+                    <button
+                        className="md:hidden fixed top-16 left-2 z-20 bg-card border rounded-lg p-2 shadow-sm"
+                        onClick={() => setSidebarOpen(true)}
+                    >
+                        <Menu className="h-4 w-4" />
+                    </button>
+                )}
+
                 {selectedLecture ? (
-                    <div className="max-w-4xl mx-auto px-8 py-8">
-                        <div className="flex items-center justify-between mb-8">
+                    <div className="max-w-4xl mx-auto px-3 md:px-8 py-4 md:py-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 md:mb-8">
                             <div>
-                                <Badge variant="secondary" className="mb-2">
+                                <h1 className="text-xl md:text-3xl font-bold">{selectedLecture.title}</h1>
+                                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                                     {selectedLecture.type === 'theory' ? 'Теория' : 'Практика'}
-                                </Badge>
-                                <h1 className="text-3xl font-bold">{selectedLecture.title}</h1>
+                                </p>
                             </div>
                             {isAdmin && editingLectureId !== selectedLecture.id && (
                                 <Button variant="outline" size="sm" onClick={() => {
                                     setEditingLectureId(selectedLecture.id);
                                     setEditBlocks(JSON.parse(JSON.stringify(selectedLecture.blocks)));
-                                }} className="gap-1">
+                                }} className="gap-1 w-full sm:w-auto">
                                     <Pencil className="h-3.5 w-3.5" />Редактировать контент
                                 </Button>
                             )}
@@ -381,7 +420,7 @@ export default function CoursePage() {
                         )}
                     </div>
                 ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <div className="flex h-full items-center justify-center text-muted-foreground text-sm md:text-base">
                         Выберите лекцию слева
                     </div>
                 )}
@@ -389,7 +428,7 @@ export default function CoursePage() {
 
             {/* Диалог копирования лекции */}
             <Dialog open={!!showCopyDialog} onOpenChange={(open) => !open && setShowCopyDialog(null)}>
-                <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="max-w-[95vw] md:max-w-lg">
                     <DialogHeader><DialogTitle>Копировать лекцию</DialogTitle></DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">Выберите курс и модуль, куда скопировать лекцию</p>

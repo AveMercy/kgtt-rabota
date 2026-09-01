@@ -5,17 +5,12 @@ import { useState, useEffect } from 'react';
 import { coursesStore } from '@/store/coursesStore';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { BookOpen, Plus, Upload, X, Pencil, Download } from 'lucide-react';
+import { BookOpen, Plus, X, Pencil, Download } from 'lucide-react';
 import type { Course } from '@/types/lecture';
-import { googleDrive } from '@/services/googleDrive'; // <-- Новый импорт
-import { FileUploader } from '@/components/FileUploader'; // <-- Новый импорт
-import { GoogleAuth } from '@/components/GoogleAuth';
-
-const levelLabels: Record<string, string> = { beginner: 'Начинающий', intermediate: 'Средний', advanced: 'Продвинутый' };
+import { FileUploader } from '@/components/FileUploader';
 
 export default function Catalog() {
     const isAdmin = useAdmin();
@@ -63,14 +58,15 @@ export default function Catalog() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-12">
-            <div className="flex items-center justify-between mb-8">
+        <div className="container mx-auto px-3 md:px-4 py-6 md:py-12">
+            {/* Шапка */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2">Курсы</h1>
-                    <p className="text-muted-foreground">Материалы лекций и практических занятий</p>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">Курсы</h1>
+                    <p className="text-sm md:text-base text-muted-foreground">Материалы лекций и практических занятий</p>
                 </div>
                 {isAdmin && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                         <Button variant="outline" size="sm" onClick={handleExport}>
                             <Download className="h-4 w-4 mr-2" />Скачать JSON
                         </Button>
@@ -80,7 +76,7 @@ export default function Catalog() {
                                     <Plus className="h-4 w-4 mr-2" />Создать курс
                                 </button>
                             </DialogTrigger>
-                            <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+                            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="max-w-[95vw] md:max-w-lg">
                                 <DialogHeader><DialogTitle>Новый курс</DialogTitle></DialogHeader>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
@@ -108,12 +104,8 @@ export default function Catalog() {
                                                 type="image"
                                                 accept="image/*"
                                                 maxSize={5}
-                                                onUpload={(url, fileId) => {
-                                                    setCourseImage(url);
-                                                }}
-                                                onError={(error) => {
-                                                    console.error('Ошибка загрузки:', error);
-                                                }}
+                                                onUpload={(url) => setCourseImage(url)}
+                                                onError={(error) => console.error('Ошибка загрузки:', error)}
                                             />
                                         )}
                                     </div>
@@ -125,7 +117,8 @@ export default function Catalog() {
                 )}
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Сетка курсов */}
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {courses.map((course) => (
                     <Link key={course.id} to={'/course/' + course.id}>
                         <Card className="h-full cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group">
@@ -145,19 +138,18 @@ export default function Catalog() {
                                 </button>
                             )}
                             {course.imageUrl && (
-                                <div className="h-32 -mx-6 -mt-6 mb-4 overflow-hidden">
+                                <div className="h-28 md:h-32 -mx-6 -mt-6 mb-4 overflow-hidden">
                                     <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover" />
                                 </div>
                             )}
-                            <CardContent className="p-6">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                        <BookOpen className="h-5 w-5 text-primary" />
+                            <CardContent className="p-4 md:p-6">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                                     </div>
-                                    <Badge variant="secondary">{levelLabels[course.level]}</Badge>
+                                    <h3 className="font-semibold text-base md:text-lg line-clamp-2">{course.title}</h3>
                                 </div>
-                                <h3 className="font-semibold text-lg mb-1">{course.title}</h3>
-                                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description}</p>
+                                <p className="text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-2">{course.description}</p>
                                 <p className="text-xs text-muted-foreground">
                                     {course.modules.reduce((acc, m) => acc + m.lectures.length, 0)} лекций
                                 </p>
@@ -167,8 +159,9 @@ export default function Catalog() {
                 ))}
             </div>
 
+            {/* Диалог редактирования */}
             <Dialog open={!!editingCourse} onOpenChange={(open) => !open && setEditingCourse(null)}>
-                <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="max-w-[95vw] md:max-w-lg">
                     <DialogHeader><DialogTitle>Редактировать курс</DialogTitle></DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
@@ -196,12 +189,8 @@ export default function Catalog() {
                                     type="image"
                                     accept="image/*"
                                     maxSize={5}
-                                    onUpload={(url, fileId) => {
-                                        setEditImage(url);
-                                    }}
-                                    onError={(error) => {
-                                        console.error('Ошибка загрузки:', error);
-                                    }}
+                                    onUpload={(url) => setEditImage(url)}
+                                    onError={(error) => console.error('Ошибка загрузки:', error)}
                                 />
                             )}
                         </div>
