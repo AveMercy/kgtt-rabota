@@ -6,7 +6,6 @@ import { coursesStore } from '@/store/coursesStore';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BlockRenderer from '@/components/BlockRenderer';
 import LectureEditor from '@/components/LectureEditor';
@@ -303,14 +302,15 @@ export default function CoursePage() {
             {/* Сайдбар */}
             <aside className={`
                 fixed md:static z-40
+                top-14 md:top-0
                 w-72 md:w-64 lg:w-72
-                h-full
+                h-[calc(100vh-3.5rem)] md:h-full
                 border-r bg-card flex flex-col
                 transition-transform duration-200
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 md:translate-x-0
             `}>
-                <div className="p-3 md:p-4 border-b flex items-center justify-between">
+                <div className="p-3 md:p-4 border-b flex items-center justify-between shrink-0">
                     <div className="min-w-0">
                         <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                             <ChevronLeft className="h-4 w-4 flex-shrink-0" />Курсы
@@ -324,7 +324,7 @@ export default function CoursePage() {
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-                <ScrollArea className="flex-1">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
                     <div className="p-2 md:p-3">
                         <DndContext sensors={modulesSensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
                             <SortableContext items={course.modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
@@ -369,7 +369,7 @@ export default function CoursePage() {
                             )
                         )}
                     </div>
-                </ScrollArea>
+                </div>
             </aside>
 
             {/* Основной контент */}
