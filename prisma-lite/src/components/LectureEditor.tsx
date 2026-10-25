@@ -20,6 +20,7 @@ import {
     Heading, Type, Hash, Code, Info, AlertTriangle, CheckCircle, Image, File, ImagePlus, Table, List,
 } from 'lucide-react';
 import { googleDrive } from '@/services/googleDrive';
+import { parseLectureText } from '@/lib/lectureImport';
 
 interface Props {
     blocks: LectureBlock[];
@@ -459,6 +460,10 @@ export default function LectureEditor({ blocks, onSave, onCancel }: Props) {
     const [editingBlocks, setEditingBlocks] = useState<LectureBlock[]>(
         blocks.map((b) => ({ ...b }))
     );
+    const [showImport, setShowImport] = useState(false);
+    const [importText, setImportText] = useState('');
+    const [importBlocks, setImportBlocks] = useState<LectureBlock[] | null>(null);
+    const [importErrors, setImportErrors] = useState<string[]>([]);
     const dragBlockType = useRef<LectureBlock['type'] | null>(null);
     const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -523,10 +528,105 @@ export default function LectureEditor({ blocks, onSave, onCancel }: Props) {
         setEditingBlocks(arrayMove(editingBlocks, index, newIndex));
     };
 
+    const parseImport = () => {
+        const result = parseLectureText(importText);
+        setImportBlocks(result.errors.length ? null : result.blocks);
+        setImportErrors(result.errors);
+    };
+
+    const applyImport = (append: boolean) => {
+        if (!importBlocks) return;
+        setEditingBlocks(append ? [...editingBlocks, ...importBlocks] : importBlocks);
+        setShowImport(false);
+        setImportText('');
+        setImportBlocks(null);
+        setImportErrors([]);
+    };
+
     return (
         <div className="flex gap-6">
             {/* Левая колонка */}
             <div className="flex-1 min-w-0">
+                <div className="mb-4 rounded-xl border bg-card p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 className="text-sm font-semibold">Импорт текста</h3>
+                            <p className="text-xs text-muted-foreground">Вставьте готовый текст и проверьте результат перед применением.</p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => {
+                            setShowImport(!showImport);
+                            setImportErrors([]);
+                            setImportBlocks(null);
+                        }}>
+                            {showImport ? 'Скрыть импорт' : 'Импортировать текст'}
+                        </Button>
+                    </div>
+                    {showImport && (
+                        <div className="mt-4 space-y-3">
+                            <Textarea
+                                value={importText}
+                                onChange={(event) => {
+                                    setImportText(event.target.value);
+                                    setImportBlocks(null);
+                                    setImportErrors([]);
+                                }}
+                                placeholder={'# Заголовок лекции\nОбычный текст абзаца.\n\n- Маркированный пункт\n- Еще пункт\n\n1. Нумерованный пункт'}
+                                className="min-h-48 font-mono text-sm"
+                            />
+                            <details className="rounded-lg bg-muted/50 p-3 text-xs">
+                                <summary className="cursor-pointer font-medium">Формат для всех блоков</summary>
+                                <div className="mt-3 space-y-2 text-muted-foreground">
+                                    <p>Markdown: # / ## / ### — заголовки; абзацы — текст; блоки ```js — код; - / * / + — маркированный список; 1. или 1) — нумерованный список; Markdown-таблица — таблица.</p>
+                                    <p>Для остальных типов укажите отдельный блок. Его содержимое продолжается до следующей строки «Блок N: ...».</p>
+                                    <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-background p-3 text-foreground">{`Блок 1: section number=1 title="Введение"
+Текст секции
+Блок 2: info title="Подсказка"
+Текст информационного блока
+Блок 3: warning title="Важно"
+Предупреждение
+Блок 4: success title="Готово"
+Сообщение об успехе
+Блок 5: image src="https://example.com/photo.jpg" alt="Фото"
+Блок 6: file url="https://example.com/guide.pdf" name="Руководство"
+Блок 7: carousel
+- https://example.com/one.jpg | Первое фото
+- https://example.com/two.jpg | Второе фото
+Блок 8: table
+| Поле | Значение |
+| --- | --- |
+| Имя | Анна |
+Блок 9: list listType=ordered
+1. Первый шаг
+2. Второй шаг
+Блок 10: list listType=unordered
+- Первый пункт
+- Второй пункт`}</pre>
+                                    <p>Доступны все типы: heading (level=1/2/3), text, section (number/title), code (language), info/warning/success (title), image (src/alt), file (url/name), carousel (строки «- URL | описание»), table (Markdown-таблица), list (listType=ordered или unordered). Параметры со значениями из нескольких слов указывайте в кавычках; русские названия типов также поддерживаются.</p>
+                                </div>
+                            </details>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button size="sm" onClick={parseImport}>Проверить текст</Button>
+                                {importBlocks && (
+                                    <>
+                                        <span className="text-xs text-muted-foreground">Распознано блоков: {importBlocks.length}</span>
+                                        <Button size="sm" variant="outline" onClick={() => applyImport(false)}>Заменить блоки</Button>
+                                        <Button size="sm" variant="outline" onClick={() => applyImport(true)}>Добавить в конец</Button>
+                                    </>
+                                )}
+                            </div>
+                            {importErrors.length > 0 && (
+                                <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                                    {importErrors.map((error) => <p key={error}>{error}</p>)}
+                                </div>
+                            )}
+                            {importBlocks && (
+                                <p role="status" className="text-xs text-muted-foreground">
+                                    Текущий список пока не изменен. Выберите действие импорта, затем нажмите «Сохранить».
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
                 {editingBlocks.length === 0 ? (
                     <div className="text-center text-muted-foreground py-20 border-2 border-dashed rounded-xl">
                         Добавьте блоки с помощью панели справа
