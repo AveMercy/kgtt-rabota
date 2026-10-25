@@ -184,7 +184,7 @@ function parseExplicitBlock(
         }
         case 'table':
             assertAttributes(attributes, [], line);
-            return parseTable(body, line + 1);
+            return parseTable(body.filter((row) => row.trim()), line + 1);
         case 'list': {
             assertAttributes(attributes, ['listtype'], line);
             const firstItem = body.find((entry) => entry.trim());
