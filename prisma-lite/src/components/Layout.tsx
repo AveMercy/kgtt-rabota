@@ -10,7 +10,7 @@ export default function Layout() {
     const location = useLocation();
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="flex h-screen flex-col overflow-hidden bg-background">
             <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
                 <div className="container mx-auto flex h-14 md:h-16 items-center justify-between px-3 md:px-4">
                     <Link to="/" className="flex items-center gap-2 text-lg md:text-xl font-bold text-primary min-w-0">
@@ -29,9 +29,8 @@ export default function Layout() {
                         </Button>
                     </nav>
                 </div>
-
             </header>
-            <main>
+            <main className="flex-1 overflow-hidden">
                 <Outlet />
             </main>
         </div>
