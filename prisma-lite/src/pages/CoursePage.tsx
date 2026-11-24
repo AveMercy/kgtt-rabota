@@ -1,7 +1,7 @@
 // src/pages/CoursePage.tsx
 
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { coursesStore } from '@/store/coursesStore';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/button';
@@ -212,7 +212,7 @@ function SortableModule({ module, selectedLectureId, onSelectLecture, onDeleteLe
 }
 
 export default function CoursePage() {
-    const { courseId } = useParams<{ courseId: string }>();
+    const { courseId, lectureId } = useParams<{ courseId: string; lectureId?: string }>();
     const isAdmin = useAdmin();
     const [course, setCourse] = useState<Course | null>(null);
     const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
@@ -230,6 +230,8 @@ export default function CoursePage() {
     const [copyTargetCourse, setCopyTargetCourse] = useState('');
     const [copyTargetModule, setCopyTargetModule] = useState('');
 
+    const navigate = useNavigate();
+
     const reloadCourse = () => {
         if (courseId) {
             const found = coursesStore.getById(courseId);
@@ -237,6 +239,10 @@ export default function CoursePage() {
         }
     };
     useEffect(() => { reloadCourse(); }, [courseId]);
+    useEffect(() => {
+        setSelectedLectureId(lectureId ?? null);
+        setEditingLectureId(null);
+    }, [courseId, lectureId, course?.id]);
     useEffect(() => {
         window.addEventListener('focus', reloadCourse);
         return () => window.removeEventListener('focus', reloadCourse);
@@ -273,14 +279,18 @@ export default function CoursePage() {
 
     const handleDeleteLecture = (moduleId: string, lectureId: string) => {
         coursesStore.deleteLecture(course.id, moduleId, lectureId);
-        if (selectedLectureId === lectureId) setSelectedLectureId(null);
+        if (selectedLectureId === lectureId) {
+            setSelectedLectureId(null);
+            navigate(`/course/${course.id}`);
+        }
         reloadCourse();
     };
 
     const handleSelectLecture = (lectureId: string) => {
         setSelectedLectureId(lectureId);
         setEditingLectureId(null);
-        setSidebarOpen(false); // Закрываем сайдбар на мобильных
+        setSidebarOpen(false);
+        navigate(`/course/${course.id}/lecture/${lectureId}`);
     };
 
     const handleCopyLecture = (lectureId: string, moduleId: string) => {
